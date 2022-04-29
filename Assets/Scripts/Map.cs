@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
+using UnityEngine;
 
 namespace Map
 {
@@ -43,6 +45,11 @@ namespace Map
         public string ToJson()
         {
             return JsonConvert.SerializeObject(this, Formatting.Indented);
+        }
+
+        internal float MaximumXOffset()
+        {
+            return nodes.Max(node => Mathf.Abs(node.position.x));
         }
     }
 }

@@ -29,7 +29,7 @@ namespace Map
         [Tooltip("If the background sprite is null, background will not be shown")]
         public Sprite background;
         public Color32 backgroundColor = Color.white;
-        public float xSize;
+        public float backgroundSideOffset;
         public float yOffset;
         [Header("Line Settings")]
         public GameObject linePrefab;
@@ -108,14 +108,15 @@ namespace Map
             var backgroundObject = new GameObject("Background");
             backgroundObject.transform.SetParent(mapParent.transform);
             var bossNode = MapNodes.FirstOrDefault(node => node.Node.nodeType == NodeType.Boss);
-            var span = m.DistanceBetweenFirstAndLastLayers();
-            backgroundObject.transform.localPosition = new Vector3(bossNode.transform.localPosition.x, span / 2f, 0f);
+            var ySpan = m.DistanceBetweenFirstAndLastLayers();
+            var xSpan = (m.MaximumXOffset() + backgroundSideOffset ) * 2;
+            backgroundObject.transform.localPosition = new Vector3(bossNode.transform.localPosition.x, ySpan / 2f, 0f);
             backgroundObject.transform.localRotation = Quaternion.identity;
             var sr = backgroundObject.AddComponent<SpriteRenderer>();
             sr.color = backgroundColor;
             sr.drawMode = SpriteDrawMode.Sliced;
             sr.sprite = background;
-            sr.size = new Vector2(xSize, span + yOffset * 2f);
+            sr.size = new Vector2(xSpan, ySpan + yOffset * 2f);
         }
 
         private void CreateMapParent()

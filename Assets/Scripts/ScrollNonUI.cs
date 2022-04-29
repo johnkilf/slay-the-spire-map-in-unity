@@ -1,9 +1,10 @@
 ﻿using DG.Tweening;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace Map
 {
-    public class ScrollNonUI : MonoBehaviour
+    public class ScrollNonUI : MonoBehaviour, IDragHandler, IPointerDownHandler, IPointerUpHandler
     {
         public float tweenBackDuration = 0.3f;
         public Ease tweenBackEase;
@@ -18,42 +19,22 @@ namespace Map
         private bool dragging;
         private Camera mainCamera;
 
+        private GameObject scrolledObject;
+
         private void Awake()
         {
             mainCamera = Camera.main;
             zDisplacement = -mainCamera.transform.position.z + transform.position.z;
         }
 
-        public void OnMouseDown()
+        public void SetScrolledObject(GameObject scrolledObject)
         {
-            pointerDisplacement = -transform.position + MouseInWorldCoords();
-            transform.DOKill();
-            dragging = true;
-        }
-
-        public void OnMouseUp()
-        {
-            dragging = false;
-            TweenBack();
-        }
-
-        private void Update()
-        {
-            if (!dragging) return;
-
-            var mousePos = MouseInWorldCoords();
-            //Debug.Log(mousePos);
-            transform.position = new Vector3(
-                freezeX ? transform.position.x : mousePos.x - pointerDisplacement.x,
-                freezeY ? transform.position.y : mousePos.y - pointerDisplacement.y,
-                transform.position.z);
+            this.scrolledObject = scrolledObject;
         }
 
         // returns mouse position in World coordinates for our GameObject to follow. 
-        private Vector3 MouseInWorldCoords()
+        private Vector3 MouseInWorldCoords(Vector3 screenMousePos)
         {
-            var screenMousePos = Input.mousePosition;
-            //Debug.Log(screenMousePos);
             screenMousePos.z = zDisplacement;
             return mainCamera.ScreenToWorldPoint(screenMousePos);
         }
@@ -62,20 +43,50 @@ namespace Map
         {
             if (freezeY)
             {
-                if (transform.localPosition.x >= xConstraints.min && transform.localPosition.x <= xConstraints.max)
+                if (scrolledObject.transform.localPosition.x >= xConstraints.min && scrolledObject.transform.localPosition.x <= xConstraints.max)
                     return;
 
-                var targetX = transform.localPosition.x < xConstraints.min ? xConstraints.min : xConstraints.max;
+                var targetX = scrolledObject.transform.localPosition.x < xConstraints.min ? xConstraints.min : xConstraints.max;
                 transform.DOLocalMoveX(targetX, tweenBackDuration).SetEase(tweenBackEase);
             }
             else if (freezeX)
             {
-                if (transform.localPosition.y >= yConstraints.min && transform.localPosition.y <= yConstraints.max)
+                Debug.Log("local pos is " + scrolledObject.transform.localPosition.y);
+                Debug.Log("min is " + yConstraints.min);
+                Debug.Log("max is " + yConstraints.max);
+                if (scrolledObject.transform.localPosition.y >= yConstraints.min && scrolledObject.transform.localPosition.y <= yConstraints.max)
                     return;
 
-                var targetY = transform.localPosition.y < yConstraints.min ? yConstraints.min : yConstraints.max;
-                transform.DOLocalMoveY(targetY, tweenBackDuration).SetEase(tweenBackEase);
+                Debug.Log("Should be tweening back");
+                var targetY = scrolledObject.transform.localPosition.y < yConstraints.min ? yConstraints.min : yConstraints.max;
+                scrolledObject.transform.DOLocalMoveY(targetY, tweenBackDuration).SetEase(tweenBackEase);
             }
+        }
+
+        public void OnDrag(PointerEventData eventData)
+        {
+            Debug.Log("Drag");
+            var position = MouseInWorldCoords(eventData.position);
+            scrolledObject.transform.position = new Vector3(
+            freezeX ? scrolledObject.transform.position.x : position.x - pointerDisplacement.x,
+            freezeY ? scrolledObject.transform.position.y : position.y - pointerDisplacement.y,
+            scrolledObject.transform.position.z);
+        }
+
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            Debug.Log("Pointer down");
+            pointerDisplacement = -scrolledObject.transform.position + MouseInWorldCoords(eventData.position);
+            Debug.Log("Pointer displacement is " + pointerDisplacement);
+            transform.DOKill();
+            dragging = true;
+        }
+
+        public void OnPointerUp(PointerEventData eventData)
+        {
+            Debug.Log("Pointer up");
+            dragging = false;
+            TweenBack();
         }
     }
 }

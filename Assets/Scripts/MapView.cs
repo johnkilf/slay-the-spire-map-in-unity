@@ -49,6 +49,7 @@ namespace Map
         public Color32 lineLockedColor = Color.gray;
 
         private GameObject firstParent;
+        private GameObject scrollCollider;
         private GameObject mapParent;
         private List<List<Point>> paths;
         private Camera cam;
@@ -120,13 +121,22 @@ namespace Map
         private void CreateMapParent()
         {
             firstParent = new GameObject("OuterMapParent");
-            mapParent = new GameObject("MapParentWithAScroll");
-            mapParent.transform.SetParent(firstParent.transform);
-            var scrollNonUi = mapParent.AddComponent<ScrollNonUI>();
+            scrollCollider = new GameObject("ScrollCollider");
+            var scrollNonUi = scrollCollider.AddComponent<ScrollNonUI>();
             scrollNonUi.freezeX = orientation == MapOrientation.BottomToTop || orientation == MapOrientation.TopToBottom;
             scrollNonUi.freezeY = orientation == MapOrientation.LeftToRight || orientation == MapOrientation.RightToLeft;
-            var boxCollider = mapParent.AddComponent<BoxCollider>();
-            boxCollider.size = new Vector3(100, 100, 1);
+            var boxCollider = scrollCollider.AddComponent<BoxCollider2D>();
+            boxCollider.size = new Vector2(100, 100);
+            scrollNonUi.transform.SetParent(firstParent.transform);
+
+
+            // Move the map parent in front of the scroll box collider so that the nodes are clickable
+            mapParent = new GameObject("MapParentWithAScroll");
+            mapParent.transform.SetParent(firstParent.transform);
+            mapParent.transform.position = mapParent.transform.position + new Vector3(0, 0, -1);
+
+            scrollNonUi.SetScrolledObject(mapParent);
+
         }
 
         private void CreateNodes(IEnumerable<Node> nodes)
@@ -219,7 +229,7 @@ namespace Map
 
         private void SetOrientation()
         {
-            var scrollNonUi = mapParent.GetComponent<ScrollNonUI>();
+            var scrollNonUi = scrollCollider.GetComponent<ScrollNonUI>();
             var span = mapManager.CurrentMap.DistanceBetweenFirstAndLastLayers();
             var bossNode = MapNodes.FirstOrDefault(node => node.Node.nodeType == NodeType.Boss);
             Debug.Log("Map span in set orientation: " + span + " camera aspect: " + cam.aspect);

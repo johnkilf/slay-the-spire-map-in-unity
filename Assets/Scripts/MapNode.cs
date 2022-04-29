@@ -1,6 +1,7 @@
 ﻿using System;
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace Map
@@ -15,7 +16,7 @@ namespace Map
 
 namespace Map
 {
-    public class MapNode : MonoBehaviour
+    public class MapNode : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
     {
         public SpriteRenderer sr;
         public SpriteRenderer visitedCircle;
@@ -67,32 +68,6 @@ namespace Map
             }
         }
 
-        private void OnMouseEnter()
-        {
-            sr.transform.DOKill();
-            sr.transform.DOScale(initialScale * HoverScaleFactor, 0.3f);
-        }
-
-        private void OnMouseExit()
-        {
-            sr.transform.DOKill();
-            sr.transform.DOScale(initialScale, 0.3f);
-        }
-
-        private void OnMouseDown()
-        {
-            mouseDownTime = Time.time;
-        }
-
-        private void OnMouseUp()
-        {
-            if (Time.time - mouseDownTime < MaxClickDuration)
-            {
-                // user clicked on this node:
-                MapPlayerTracker.Instance.SelectNode(this);
-            }
-        }
-
         public void ShowSwirlAnimation()
         {
             if (visitedCircleImage == null)
@@ -102,6 +77,32 @@ namespace Map
             visitedCircleImage.fillAmount = 0;
 
             DOTween.To(() => visitedCircleImage.fillAmount, x => visitedCircleImage.fillAmount = x, 1f, fillDuration);
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            sr.transform.DOKill();
+            sr.transform.DOScale(initialScale * HoverScaleFactor, 0.3f);
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            sr.transform.DOKill();
+            sr.transform.DOScale(initialScale, 0.3f);
+        }
+
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            mouseDownTime = Time.time;
+        }
+
+        public void OnPointerUp(PointerEventData eventData)
+        {
+            if (Time.time - mouseDownTime < MaxClickDuration)
+            {
+                // user clicked on this node:
+                MapPlayerTracker.Instance.SelectNode(this);
+            }
         }
     }
 }

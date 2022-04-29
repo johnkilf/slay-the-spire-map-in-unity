@@ -29,8 +29,11 @@ namespace Map
         [Tooltip("If the background sprite is null, background will not be shown")]
         public Sprite background;
         public Color32 backgroundColor = Color.white;
-        public float backgroundSideOffset;
-        public float yOffset;
+
+        [Tooltip("How much space to show at the sides of the map")]
+        public float backgroundXOffset;
+        [Tooltip("How much space to show at the top and bottom of the map")]
+        public float backgroundYOffset;
         [Header("Line Settings")]
         public GameObject linePrefab;
         [Tooltip("Line point count should be > 2 to get smooth color gradients")]
@@ -48,7 +51,7 @@ namespace Map
         [Tooltip("Unavailable path color")]
         public Color32 lineLockedColor = Color.gray;
 
-        private GameObject firstParent;
+        private GameObject outerMapParent;
         private GameObject scrollCollider;
         private GameObject mapParent;
         private List<List<Point>> paths;
@@ -67,8 +70,8 @@ namespace Map
 
         private void ClearMap()
         {
-            if (firstParent != null)
-                Destroy(firstParent);
+            if (outerMapParent != null)
+                Destroy(outerMapParent);
 
             MapNodes.Clear();
             lineConnections.Clear();
@@ -90,6 +93,8 @@ namespace Map
 
             DrawLines();
 
+            SetCameraSize(m);
+
             SetOrientation();
 
             ResetNodesRotation();
@@ -99,6 +104,22 @@ namespace Map
             SetLineColors();
 
             CreateMapBackground(m);
+
+            
+        }
+
+        private void SetCameraSize(Map m)
+        {
+            // TODO This assumes map is a vertical map - need to fix for horizontal maps too
+            var mapSize = (m.MaximumXOffset() + backgroundXOffset) * 2;
+
+            var minimumWidth = mapSize + (2 * backgroundXOffset);
+
+            float screenAspect = (float)Screen.width / (float)Screen.height;
+
+            float heightAtMinWidth = minimumWidth / screenAspect;
+
+            cam.orthographicSize = heightAtMinWidth / 2;
         }
 
         private void CreateMapBackground(Map m)
@@ -109,31 +130,31 @@ namespace Map
             backgroundObject.transform.SetParent(mapParent.transform);
             var bossNode = MapNodes.FirstOrDefault(node => node.Node.nodeType == NodeType.Boss);
             var ySpan = m.DistanceBetweenFirstAndLastLayers();
-            var xSpan = (m.MaximumXOffset() + backgroundSideOffset ) * 2;
+            var xSpan = (m.MaximumXOffset() + backgroundXOffset ) * 2;
             backgroundObject.transform.localPosition = new Vector3(bossNode.transform.localPosition.x, ySpan / 2f, 0f);
             backgroundObject.transform.localRotation = Quaternion.identity;
             var sr = backgroundObject.AddComponent<SpriteRenderer>();
             sr.color = backgroundColor;
             sr.drawMode = SpriteDrawMode.Sliced;
             sr.sprite = background;
-            sr.size = new Vector2(xSpan, ySpan + yOffset * 2f);
+            sr.size = new Vector2(xSpan, ySpan + backgroundYOffset * 2f);
         }
 
         private void CreateMapParent()
         {
-            firstParent = new GameObject("OuterMapParent");
+            outerMapParent = new GameObject("OuterMapParent");
             scrollCollider = new GameObject("ScrollCollider");
             var scrollNonUi = scrollCollider.AddComponent<ScrollNonUI>();
             scrollNonUi.freezeX = orientation == MapOrientation.BottomToTop || orientation == MapOrientation.TopToBottom;
             scrollNonUi.freezeY = orientation == MapOrientation.LeftToRight || orientation == MapOrientation.RightToLeft;
             var boxCollider = scrollCollider.AddComponent<BoxCollider2D>();
             boxCollider.size = new Vector2(100, 100);
-            scrollNonUi.transform.SetParent(firstParent.transform);
+            scrollNonUi.transform.SetParent(outerMapParent.transform);
 
 
             // Move the map parent in front of the scroll box collider so that the nodes are clickable
             mapParent = new GameObject("MapParentWithAScroll");
-            mapParent.transform.SetParent(firstParent.transform);
+            mapParent.transform.SetParent(outerMapParent.transform);
             mapParent.transform.position = mapParent.transform.position + new Vector3(0, 0, -1);
 
             scrollNonUi.SetScrolledObject(mapParent);
@@ -235,9 +256,11 @@ namespace Map
             var bossNode = MapNodes.FirstOrDefault(node => node.Node.nodeType == NodeType.Boss);
             Debug.Log("Map span in set orientation: " + span + " camera aspect: " + cam.aspect);
 
-            // setting first parent to be right in front of the camera first:
-            firstParent.transform.position = new Vector3(cam.transform.position.x, cam.transform.position.y, 0f);
-            var offset = orientationOffset;
+            // setting outerMapParent to be right in front of the camera first:
+            outerMapParent.transform.position = new Vector3(cam.transform.position.x, cam.transform.position.y, 0f);
+
+            // TODO This probably only works for bottom to top maps
+            float offset = -cam.orthographicSize + backgroundYOffset + orientationOffset;
             switch (orientation)
             {
                 case MapOrientation.BottomToTop:
@@ -246,7 +269,7 @@ namespace Map
                         scrollNonUi.yConstraints.max = 0;
                         scrollNonUi.yConstraints.min = -(span + 2f * offset);
                     }
-                    firstParent.transform.localPosition += new Vector3(0, offset, 0);
+                    outerMapParent.transform.localPosition += new Vector3(0, offset, 0);
                     break;
                 case MapOrientation.TopToBottom:
                     mapParent.transform.eulerAngles = new Vector3(0, 0, 180);
@@ -256,13 +279,13 @@ namespace Map
                         scrollNonUi.yConstraints.max = span + 2f * offset;
                     }
                     // factor in map span:
-                    firstParent.transform.localPosition += new Vector3(0, -offset, 0);
+                    outerMapParent.transform.localPosition += new Vector3(0, -offset, 0);
                     break;
                 case MapOrientation.RightToLeft:
                     offset *= cam.aspect;
                     mapParent.transform.eulerAngles = new Vector3(0, 0, 90);
                     // factor in map span:
-                    firstParent.transform.localPosition -= new Vector3(offset, bossNode.transform.position.y, 0);
+                    outerMapParent.transform.localPosition -= new Vector3(offset, bossNode.transform.position.y, 0);
                     if (scrollNonUi != null)
                     {
                         scrollNonUi.xConstraints.max = span + 2f * offset;
@@ -272,7 +295,7 @@ namespace Map
                 case MapOrientation.LeftToRight:
                     offset *= cam.aspect;
                     mapParent.transform.eulerAngles = new Vector3(0, 0, -90);
-                    firstParent.transform.localPosition += new Vector3(offset, -bossNode.transform.position.y, 0);
+                    outerMapParent.transform.localPosition += new Vector3(offset, -bossNode.transform.position.y, 0);
                     if (scrollNonUi != null)
                     {
                         scrollNonUi.xConstraints.max = 0;

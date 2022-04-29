@@ -51,13 +51,9 @@ namespace Map
             }
             else if (freezeX)
             {
-                Debug.Log("local pos is " + scrolledObject.transform.localPosition.y);
-                Debug.Log("min is " + yConstraints.min);
-                Debug.Log("max is " + yConstraints.max);
                 if (scrolledObject.transform.localPosition.y >= yConstraints.min && scrolledObject.transform.localPosition.y <= yConstraints.max)
                     return;
 
-                Debug.Log("Should be tweening back");
                 var targetY = scrolledObject.transform.localPosition.y < yConstraints.min ? yConstraints.min : yConstraints.max;
                 scrolledObject.transform.DOLocalMoveY(targetY, tweenBackDuration).SetEase(tweenBackEase);
             }
@@ -65,7 +61,6 @@ namespace Map
 
         public void OnDrag(PointerEventData eventData)
         {
-            Debug.Log("Drag");
             var position = MouseInWorldCoords(eventData.position);
             scrolledObject.transform.position = new Vector3(
             freezeX ? scrolledObject.transform.position.x : position.x - pointerDisplacement.x,
@@ -75,9 +70,7 @@ namespace Map
 
         public void OnPointerDown(PointerEventData eventData)
         {
-            Debug.Log("Pointer down");
             pointerDisplacement = -scrolledObject.transform.position + MouseInWorldCoords(eventData.position);
-            Debug.Log("Pointer displacement is " + pointerDisplacement);
             transform.DOKill();
             dragging = true;
         }

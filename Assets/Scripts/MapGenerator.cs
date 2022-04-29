@@ -68,7 +68,9 @@ namespace Map
             var nodesOnThisLayer = new List<Node>();
 
             // offset of this layer to make all the nodes centered:
-            var offset = layer.nodesApartDistance * config.GridWidth / 2f;
+            var offset = layer.nodesApartDistance * (config.GridWidth-1) / 2f;
+            Debug.Log("Offset is " + offset);
+            Debug.Log("nodes apart dist is " + layer.nodesApartDistance);
 
             for (var i = 0; i < config.GridWidth; i++)
             {
@@ -78,6 +80,9 @@ namespace Map
                 {
                     position = new Vector2(-offset + i * layer.nodesApartDistance, GetDistanceToLayer(layerIndex))
                 };
+
+                Debug.Log("point is (" + node.point.x + "," + node.point.y + ")");
+                Debug.Log("position is (" + node.position.x + "," + node.position.y + ")");
                 nodesOnThisLayer.Add(node);
             }
 

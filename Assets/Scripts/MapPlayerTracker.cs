@@ -12,13 +12,16 @@ namespace Map
         public MapManager mapManager;
         public MapView view;
 
-        public static MapPlayerTracker Instance;
-
         public bool Locked { get; set; }
 
-        private void Awake()
+        private void OnEnable()
         {
-            Instance = this;
+            MapNode.nodeClicked += SelectNode;
+        }
+
+        private void OnDisable()
+        {
+            MapNode.nodeClicked += SelectNode;
         }
 
         public void SelectNode(MapNode mapNode)

@@ -12,11 +12,9 @@ namespace Map
         public FloatMinMax xConstraints = new FloatMinMax();
         public bool freezeY;
         public FloatMinMax yConstraints = new FloatMinMax();
-        private Vector2 offset;
         // distance from the center of this Game Object to the point where we clicked to start dragging 
         private Vector3 pointerDisplacement;
         private float zDisplacement;
-        private bool dragging;
         private Camera mainCamera;
 
         private GameObject scrolledObject;
@@ -72,13 +70,10 @@ namespace Map
         {
             pointerDisplacement = -scrolledObject.transform.position + MouseInWorldCoords(eventData.position);
             transform.DOKill();
-            dragging = true;
         }
 
         public void OnPointerUp(PointerEventData eventData)
         {
-            Debug.Log("Pointer up");
-            dragging = false;
             TweenBack();
         }
     }

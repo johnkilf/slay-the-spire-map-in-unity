@@ -22,6 +22,7 @@ namespace Map
         public SpriteRenderer visitedCircle;
         public Image visitedCircleImage;
 
+
         public Node Node { get; private set; }
         public NodeBlueprint Blueprint { get; private set; }
 
@@ -31,14 +32,25 @@ namespace Map
 
         private const float MaxClickDuration = 0.5f;
 
-        public void SetUp(Node node, NodeBlueprint blueprint)
+
+        // Cached values from MapView
+        private Color visitedColor;
+        private Color lockedColor;
+
+
+        public static event Action<MapNode> nodeClicked;
+
+        public void SetUp(Node node, NodeBlueprint blueprint, Color lockedColor, Color visitedColor)
         {
+            this.lockedColor = lockedColor;
+            this.visitedColor = visitedColor;
+            
             Node = node;
             Blueprint = blueprint;
             sr.sprite = blueprint.sprite;
             if (node.nodeType == NodeType.Boss) transform.localScale *= 1.5f;
             initialScale = sr.transform.localScale.x;
-            visitedCircle.color = MapView.Instance.visitedColor;
+            visitedCircle.color = visitedColor;
             visitedCircle.gameObject.SetActive(false);
             SetState(NodeStates.Locked);
         }
@@ -50,18 +62,18 @@ namespace Map
             {
                 case NodeStates.Locked:
                     sr.DOKill();
-                    sr.color = MapView.Instance.lockedColor;
+                    sr.color = lockedColor;
                     break;
                 case NodeStates.Visited:
                     sr.DOKill();
-                    sr.color = MapView.Instance.visitedColor;
+                    sr.color = visitedColor;
                     visitedCircle.gameObject.SetActive(true);
                     break;
                 case NodeStates.Attainable:
                     // start pulsating from visited to locked color:
-                    sr.color = MapView.Instance.lockedColor;
+                    sr.color = lockedColor;
                     sr.DOKill();
-                    sr.DOColor(MapView.Instance.visitedColor, 0.5f).SetLoops(-1, LoopType.Yoyo);
+                    sr.DOColor(visitedColor, 0.5f).SetLoops(-1, LoopType.Yoyo);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(state), state, null);
@@ -100,8 +112,9 @@ namespace Map
         {
             if (Time.time - mouseDownTime < MaxClickDuration)
             {
+                nodeClicked.Invoke(this);
                 // user clicked on this node:
-                MapPlayerTracker.Instance.SelectNode(this);
+                
             }
         }
     }

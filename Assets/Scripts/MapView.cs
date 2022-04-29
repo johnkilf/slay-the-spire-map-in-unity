@@ -54,17 +54,13 @@ namespace Map
         private GameObject outerMapParent;
         private GameObject scrollCollider;
         private GameObject mapParent;
-        private List<List<Point>> paths;
         private Camera cam;
         // ALL nodes:
         public readonly List<MapNode> MapNodes = new List<MapNode>();
         private readonly List<LineConnection> lineConnections = new List<LineConnection>();
 
-        public static MapView Instance;
-
         private void Awake()
         {
-            Instance = this;
             cam = Camera.main;
         }
 
@@ -175,7 +171,7 @@ namespace Map
             var mapNodeObject = Instantiate(nodePrefab, mapParent.transform);
             var mapNode = mapNodeObject.GetComponent<MapNode>();
             var blueprint = GetBlueprint(node.blueprintName);
-            mapNode.SetUp(node, blueprint);
+            mapNode.SetUp(node, blueprint, lockedColor, visitedColor);
             mapNode.transform.localPosition = node.position;
             return mapNode;
         }

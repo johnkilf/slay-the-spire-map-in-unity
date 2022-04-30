@@ -27,7 +27,7 @@ namespace Map
                 {
                     CurrentMap = map;
                     // player has not reached the boss yet, load the current map
-                    view.ShowMap(map);
+                    view.ShowMap(map, config);
                 }
             }
             else
@@ -41,7 +41,7 @@ namespace Map
             var map = MapGenerator.GetMap(config);
             CurrentMap = map;
             Debug.Log(map.ToJson());
-            view.ShowMap(map);
+            view.ShowMap(map, config);
         }
 
         public void SaveMap()

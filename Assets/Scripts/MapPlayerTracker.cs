@@ -55,8 +55,8 @@ namespace Map
             Locked = lockAfterSelecting;
             mapManager.CurrentMap.path.Add(mapNode.Node.point);
             mapManager.SaveMap();
-            view.SetAttainableNodes();
-            view.SetLineColors();
+            view.SetAttainableNodes(mapManager.CurrentMap);
+            view.SetLineColors(mapManager.CurrentMap);
             mapNode.ShowSwirlAnimation();
 
             DOTween.Sequence().AppendInterval(enterNodeDelay).OnComplete(() => EnterNode(mapNode));
